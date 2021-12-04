@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Cinemachine;
 using UnityEngine;
 
@@ -24,7 +25,9 @@ public class PlayerBehaviour : MonoBehaviour
     public PlayerAnimationState state;
 
     [Header("Sound FX")] 
+    public List<AudioSource> audioSources;
     public AudioSource jumpSound;
+    public AudioSource hitSound;
 
     [Header("Dust Trail")]
     public ParticleSystem dustTrail;
@@ -49,7 +52,11 @@ public class PlayerBehaviour : MonoBehaviour
 
         rigidbody = GetComponent<Rigidbody2D>();
         animatorController = GetComponent<Animator>();
-        jumpSound = GetComponent<AudioSource>();
+
+        // Assign sfx
+        audioSources = GetComponents<AudioSource>().ToList();
+        jumpSound = audioSources[0];
+        hitSound = audioSources[1];
 
         dustTrail = GetComponentInChildren<ParticleSystem>();
 
@@ -89,7 +96,7 @@ public class PlayerBehaviour : MonoBehaviour
             if (jump > 0)
             {
                 jumpSound.Play();
-                ShakeCamera();
+              
                
             }
 
@@ -152,6 +159,18 @@ public class PlayerBehaviour : MonoBehaviour
         return x;
     }
 
+    private void CreateDustTrail()
+    {
+        dustTrail.GetComponent<Renderer>().material.SetColor("_Color", dustTrailColour);
+        dustTrail.Play();
+    }
+
+    private void ShakeCamera()
+    {
+        perlin.m_AmplitudeGain = shakeIntensity;
+        isCameraShaking = true;
+    }
+
     // EVENTS
 
     private void OnCollisionEnter2D(Collision2D other)
@@ -170,16 +189,13 @@ public class PlayerBehaviour : MonoBehaviour
         }
     }
 
-    private void CreateDustTrail()
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        dustTrail.GetComponent<Renderer>().material.SetColor("_Color", dustTrailColour);
-        dustTrail.Play();
-    }
-
-    private void ShakeCamera()
-    {
-        perlin.m_AmplitudeGain = shakeIntensity;
-        isCameraShaking = true;
+        if (other.gameObject.CompareTag("Bullet"))
+        {
+            hitSound.Play();
+            ShakeCamera();
+        }
     }
 
 
